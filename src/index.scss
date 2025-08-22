@@ -1,0 +1,86 @@
+
+.bg-navbar-custom {
+    background-color: hsl(56, 83%, 82%) !important;
+}
+
+.navbar .nav-link {
+    font-weight: bold !important;
+    font-size: 1.4rem !important;
+}
+
+.navbar .navbar-brand h1 {
+    font-weight: bold !important;
+    font-size: 3rem !important;
+}
+
+.navbar .dropdown-toggle {
+    font-weight: bold !important;
+    font-size: 1.1rem !important;
+}
+
+/* Make login text black instead of white */
+.navbar .nav-link.text-white {
+    color: black !important;
+}
+
+$my-primary-hsl: hsl(190, 76%, 50%);
+$my-secondary-hsl: hsl(0, 0%, 0%);
+$my-background-hsl: hsl(56, 96%, 92%);
+$my-foreground-hsl: hsl(0, 0%, 0%);
+
+$my-card-hsl: hsl(56, 100%, 98%);
+$my-card-border: hsl(232, 18%, 83%);
+
+$card-bg: $my-card-hsl;
+$card-border-color: $my-card-border;
+
+
+
+$body-color: hsl(0, 0%, 0%);
+$font-family-base: "Roboto Slab", serif, 300;
+$font-size-base: 1.1rem;
+
+
+/* make the customizations */
+$theme-colors: (
+    "primary": $my-primary-hsl,
+    "secondary": $my-secondary-hsl,
+    "info": rgb(0, 0, 0),
+    "danger": tomato
+);
+
+/* import bootstrap to set changes */
+@import '~bootstrap/scss/bootstrap'; 
+
+body{
+    background-color: $my-background-hsl;
+    color: $my-foreground-hsl;
+}
+
+/* Remove container margins only for cuisine sections */
+section.py-4 .container {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Add minimal padding to cuisine sections for readability */
+section.py-4 {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+.form-control::placeholder {
+    color: black !important;
+    opacity: 1;
+}
+
+/* Add space inside recipe cards so content doesn't touch bottom */
+.card-body {
+    padding-bottom: 25px !important;
+}
+
+/* Add space at bottom of recipe detail pages */
+.container {
+    padding-bottom: 30px !important;
+}
