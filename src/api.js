@@ -3,6 +3,7 @@ import { apiCache, buildCacheKey } from './cache';
 const MAX_DAILY_REQUESTS = parseInt(process.env.REACT_APP_MAX_DAILY_REQUESTS || '20', 10);
 const PERSIST_PREFIX = 'apiCache:';
 const API_KEY = process.env.REACT_APP_API_KEY;
+const API_BASE = (process.env.REACT_APP_RECIPES_API_BASE || 'https://api.spoonacular.com').replace(/\/$/, '');
 
 
 function todayKey() {
@@ -113,7 +114,7 @@ async function cachedJsonGet(url, options = {}) {
 export async function fetchRecipes(options = {}) {
     const { query, cuisine, number = 6, offset = 0, sort, bypassCache, ttlMs } = options; 
 
-    let url = `/recipes/complexSearch?apiKey=${API_KEY}`;
+    let url = `${API_BASE}/recipes/complexSearch?apiKey=${API_KEY}`;
 
     if (number) {
         url += `&number=${number}`;
@@ -137,7 +138,7 @@ export async function fetchRecipes(options = {}) {
 
 export async function findRecipesByIngredients(options = {}){
     const { ingredients, number = 6, ranking = 1, ignorePantry = true, bypassCache, ttlMs } = options;
-    let url = `/recipes/findByIngredients?apiKey=${API_KEY}`;
+    let url = `${API_BASE}/recipes/findByIngredients?apiKey=${API_KEY}`;
 
     const ingredientsString = Array.isArray(ingredients)
         ? ingredients.join(',')
@@ -165,7 +166,7 @@ export async function findRecipesByIngredients(options = {}){
 
 export async function getRecipeDetails(recipeId, options = {}) {
     const { bypassCache, ttlMs } = options;
-    const url = `/recipes/${recipeId}/information?apiKey=${API_KEY}`;
+    const url = `${API_BASE}/recipes/${recipeId}/information?apiKey=${API_KEY}`;
 
     return cachedJsonGet(url, { ttlMs: ttlMs ?? 1000 * 60 * 60 * 24, persistTtlMs: 1000 * 60 * 60 * 24, bypassCache: !!bypassCache });
 }
