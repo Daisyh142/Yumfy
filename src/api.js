@@ -30,7 +30,7 @@ function incrementUsage() {
     try {
         localStorage.setItem(key, String(count + 1));
     } catch {
-        // ignore storage errors
+        
     }
 }
 
@@ -54,15 +54,15 @@ function writePersisted(key, data, ttlMs) {
         const record = { data, expiresAt: Date.now() + ttlMs };
         localStorage.setItem(PERSIST_PREFIX + key, JSON.stringify(record));
     } catch {
-        // ignore storage errors
+        
     }
 }
 
 async function cachedJsonGet(url, options = {}) {
     const {
-        ttlMs = 1000 * 60 * 30, // 30 minutes in-memory
+        ttlMs = 1000 * 60 * 30, 
         persist = true,
-        persistTtlMs = 1000 * 60 * 60 * 12, // 12 hours persistent
+        persistTtlMs = 1000 * 60 * 60 * 12, 
         bypassCache = false,
         bypassQuota = false,
     } = options;
@@ -109,7 +109,7 @@ async function cachedJsonGet(url, options = {}) {
     );
 }
 
-//Used to call on recipes based on their cuisine
+
 export async function fetchRecipes(options = {}) {
     const { query, cuisine, number = 6, offset = 0, sort, bypassCache, ttlMs } = options; 
 
@@ -134,12 +134,7 @@ export async function fetchRecipes(options = {}) {
     return cachedJsonGet(url, { ttlMs: ttlMs ?? 1000 * 60 * 30, persistTtlMs: 1000 * 60 * 60 * 12, bypassCache: !!bypassCache });
 }
 
-/* Used to look up ingredients 
-/* @ingredients a string that must have a , to seperate the items 
-/* @number default 10 recipes will appear 
-/* @ranking 1 will priotize the ingredients that we have the most of 
-/* @ignorePantry true will ignore common ingredients like salt, pepper, etc...
-*/
+
 export async function findRecipesByIngredients(options = {}){
     const { ingredients, number = 6, ranking = 1, ignorePantry = true, bypassCache, ttlMs } = options;
     let url = `/recipes/findByIngredients?apiKey=${API_KEY}`;
@@ -167,7 +162,7 @@ export async function findRecipesByIngredients(options = {}){
     return cachedJsonGet(url, { ttlMs: ttlMs ?? 1000 * 60 * 60 * 6, persistTtlMs: 1000 * 60 * 60 * 12, bypassCache: !!bypassCache });
 }
 
-//Used to show the recipe information when user clicks "view recipe"
+
 export async function getRecipeDetails(recipeId, options = {}) {
     const { bypassCache, ttlMs } = options;
     const url = `/recipes/${recipeId}/information?apiKey=${API_KEY}`;

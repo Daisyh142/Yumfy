@@ -6,59 +6,81 @@ import Header from './Header';
 import RecipeDetails from './RecipeDetails';
 import Login from './Login';
 import ProfilePage from './ProfilePage';
-import { getCurrentUser } from './localAuth';
-import { getUserFavorites, addToFavorites, removeFromFavorites } from './userDataStorage';
+import { getCurrentUser, onAuthStateChange } from './services/supabaseAuth';
+import { getUserFavorites, addToFavorites, removeFromFavorites } from './services/supabaseUserData';
+import { AIChatbox } from './components/AIChatbox';
 
 function App() {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Check authentication status and load favorites on app load
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    
-    // Load favorites for the current user
-    if (currentUser) {
-      const userFavorites = getUserFavorites(currentUser.email);
-      setFavorites(userFavorites);
-    } else {
-      setFavorites([]);
-    }
-    
-    setAuthChecked(true);
+    const initAuth = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+        
+        if (currentUser) {
+          const userFavorites = await getUserFavorites();
+          setFavorites(userFavorites);
+        } else {
+          setFavorites([]);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setUser(null);
+        setFavorites([]);
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = onAuthStateChange(async (event, user) => {
+      console.log('Auth state changed:', event, user);
+      setUser(user);
+      
+      if (user) {
+        const userFavorites = await getUserFavorites();
+        setFavorites(userFavorites);
+      } else {
+        setFavorites([]);
+      }
+      
+      setAuthChecked(true);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Update favorites when user changes (login/logout)
-  useEffect(() => {
-    if (user) {
-      const userFavorites = getUserFavorites(user.email);
-      setFavorites(userFavorites);
-    } else {
-      setFavorites([]);
+  const handleToggleFavorite = async (recipeData) => {
+    if (!user) return;
+    
+    try {
+      let newFavorites;
+      
+      const isCurrentlyFavorited = favorites.some(fav => fav.id === recipeData.id);
+      console.log('Is currently favorited:', isCurrentlyFavorited);
+      
+      if (isCurrentlyFavorited) {
+        console.log('Removing from favorites...');
+        newFavorites = await removeFromFavorites(recipeData.id);
+      } else {
+        console.log('Adding to favorites...');
+        newFavorites = await addToFavorites(recipeData);
+      }
+      
+      console.log('New favorites from Supabase:', newFavorites);
+      
+      setFavorites(newFavorites);
+      console.log("Favorites updated for", user.email, ":", newFavorites);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
-  }, [user]); 
-
-  const handleToggleFavorite = (recipeData) => {
-    if (!user) return; // Should not happen due to auth checks, but safety first
-    
-    let newFavorites;
-    
-    if (recipeData.isFavorited) {
-      // Add to favorites
-      newFavorites = addToFavorites(user.email, recipeData);
-    } else {
-      // Remove from favorites  
-      newFavorites = removeFromFavorites(user.email, recipeData.id);
-    }
-    
-    // Update React state to reflect the change immediately
-    setFavorites(newFavorites);
-    console.log("Favorites updated for", user.email, ":", newFavorites);
   };
 
-  // Show loading until auth is checked
   if (!authChecked) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -84,7 +106,7 @@ function App() {
           />
           <Route
             path="/recipe/:recipeId" 
-            element={<RecipeDetails onToggleFavorite={handleToggleFavorite} user={user} />} 
+            element={<RecipeDetails onToggleFavorite={handleToggleFavorite} user={user} favorites={favorites} />} 
           />
           <Route 
             path="/login" 
@@ -95,6 +117,7 @@ function App() {
             element={<ProfilePage user={user} setUser={setUser} favorites={favorites} onToggleFavorite={handleToggleFavorite} />} 
           />
         </Routes>
+        <AIChatbox />
       </div>
     </Router>
   );

@@ -12,17 +12,17 @@ const FavoritesPage = ({ favorites, onToggleFavorite, user }) => {
         </div>
       ) : (
         <div className="row g-3">
-          {favorites.map((recipe) => (
-            <div className="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" key={recipe.id}>
+          {favorites.map((recipe, idx) => (
+            <div className="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2" key={`${recipe.id}-${idx}`}>
               <RecipeCard
                 id={recipe.id}
                 image={recipe.image}
                 title={recipe.title}
-                initialRating={recipe.initialRating} // Pass existing data if available
-                initialReviews={recipe.initialReviews} // Pass existing data if available
-                onToggleFavorite={onToggleFavorite} // Allow unfavoriting from this page too
+                initialRating={recipe.initialRating} 
+                initialReviews={recipe.initialReviews} 
+                onToggleFavorite={onToggleFavorite} 
                 isAuthenticated={!!user}
-                initiallyFavorited={true} // All recipes on this page are favorited
+                initiallyFavorited={true} 
                 favorites={favorites}
               />
             </div>

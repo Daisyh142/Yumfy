@@ -1,9 +1,6 @@
-// Unified localStorage-based user data management
-// Stores all user data (favorites, ratings, preferences) in one place per user
 
 const USER_DATA_PREFIX = 'yumfy_user_data_';
 
-// Get all user data for a specific user
 export function getUserData(userEmail) {
   if (!userEmail) return getDefaultUserData();
   
@@ -12,7 +9,6 @@ export function getUserData(userEmail) {
     const stored = localStorage.getItem(key);
     const userData = stored ? JSON.parse(stored) : getDefaultUserData();
     
-    // Ensure all required properties exist (for backward compatibility)
     return {
       ...getDefaultUserData(),
       ...userData
@@ -23,7 +19,6 @@ export function getUserData(userEmail) {
   }
 }
 
-// Default user data structure
 function getDefaultUserData() {
   return {
     favorites: [],
@@ -40,7 +35,6 @@ function getDefaultUserData() {
   };
 }
 
-// Save all user data for a specific user
 export function saveUserData(userEmail, userData) {
   if (!userEmail) return;
   
@@ -52,7 +46,6 @@ export function saveUserData(userEmail, userData) {
   }
 }
 
-// FAVORITES FUNCTIONS
 export function getUserFavorites(userEmail) {
   const userData = getUserData(userEmail);
   return userData.favorites;
@@ -61,7 +54,6 @@ export function getUserFavorites(userEmail) {
 export function addToFavorites(userEmail, recipe) {
   const userData = getUserData(userEmail);
   
-  // Check if recipe is already favorited
   if (!userData.favorites.some(fav => fav.id === recipe.id)) {
     const newFavorite = {
       id: recipe.id,
@@ -98,7 +90,6 @@ export function clearUserFavorites(userEmail) {
   saveUserData(userEmail, userData);
 }
 
-// RATINGS FUNCTIONS
 export function getUserRatings(userEmail) {
   const userData = getUserData(userEmail);
   return userData.ratings;
@@ -110,10 +101,8 @@ export function setRecipeRating(userEmail, recipeId, rating, recipeTitle = '', r
   const userData = getUserData(userEmail);
   
   if (rating === 0) {
-    // Remove rating if set to 0
     delete userData.ratings[recipeId];
   } else {
-    // Save rating with metadata
     userData.ratings[recipeId] = {
       rating: rating,
       title: recipeTitle,
@@ -142,7 +131,7 @@ export function getRatedRecipes(userEmail) {
     title: data.title,
     image: data.image,
     dateRated: data.dateRated
-  })).sort((a, b) => new Date(b.dateRated) - new Date(a.dateRated)); // Most recent first
+  })).sort((a, b) => new Date(b.dateRated) - new Date(a.dateRated)); 
 }
 
 export function clearUserRatings(userEmail) {
@@ -151,20 +140,6 @@ export function clearUserRatings(userEmail) {
   saveUserData(userEmail, userData);
 }
 
-// PREFERENCES FUNCTIONS (for future use)
-export function getUserPreferences(userEmail) {
-  const userData = getUserData(userEmail);
-  return userData.preferences;
-}
-
-export function updateUserPreferences(userEmail, preferences) {
-  const userData = getUserData(userEmail);
-  userData.preferences = { ...userData.preferences, ...preferences };
-  saveUserData(userEmail, userData);
-  return userData.preferences;
-}
-
-// PROFILE FUNCTIONS (for future use)
 export function getUserProfile(userEmail) {
   const userData = getUserData(userEmail);
   return userData.profile;
@@ -177,7 +152,6 @@ export function updateUserProfile(userEmail, profile) {
   return userData.profile;
 }
 
-// UTILITY FUNCTIONS
 export function clearAllUserData(userEmail) {
   if (!userEmail) return;
   
@@ -201,7 +175,6 @@ export function importUserData(userEmail, userData) {
   saveUserData(userEmail, validatedData);
 }
 
-// RECENTLY VIEWED FUNCTIONS
 export function addToRecentlyViewed(userEmail, recipe) {
   if (!userEmail || !recipe.id) return;
   
@@ -213,13 +186,10 @@ export function addToRecentlyViewed(userEmail, recipe) {
     dateViewed: new Date().toISOString()
   };
   
-  // Remove if already exists to avoid duplicates
   userData.recentlyViewed = userData.recentlyViewed.filter(item => item.id !== recipe.id);
   
-  // Add to beginning of array
   userData.recentlyViewed.unshift(viewedRecipe);
   
-  // Keep only last 10 viewed recipes
   userData.recentlyViewed = userData.recentlyViewed.slice(0, 10);
   
   saveUserData(userEmail, userData);

@@ -1,13 +1,10 @@
-// Lightweight in-memory cache with TTL and in-flight request deduplication
-// Note: Resets on page reload. Suitable for reducing API calls within a session.
-
-const defaultTtlMs = 1000 * 60 * 60 * 2; // Refresh after 2 hours
+const defaultTtlMs = 1000 * 60 * 60 * 2; 
 
 class TtlCache {
     constructor(ttlMs = defaultTtlMs) {
         this.ttlMs = ttlMs;
-        this.map = new Map(); // key -> { value, expiresAt }
-        this.inFlight = new Map(); // key -> Promise
+        this.map = new Map();
+        this.inFlight = new Map(); 
     }
 
     _now() {

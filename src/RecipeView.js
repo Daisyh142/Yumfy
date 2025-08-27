@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser } from "./localAuth";
-import { getRecipeRating, setRecipeRating, addToRecentlyViewed } from "./userDataStorage";
+import { getCurrentUser } from "./services/supabaseAuth";
+import { getRecipeRating, setRecipeRating, addToRecentlyViewed } from "./services/supabaseUserData";
 
-const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, onToggleFavorite, persistFavorite, initiallyFavorited = false, isAuthenticated = false, favorites }) => {
+
+const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, onToggleFavorite, persistFavorite, initiallyFavorited = false, isAuthenticated = false, favorites, disableRatingFetch = false }) => {
   const [isFavorited, setIsFavorited] = useState(initiallyFavorited); 
   const [userRating, setUserRating] = useState(initialRating); 
   const [hoverRating, setHoverRating] = useState(0); 
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingRating, setIsSavingRating] = useState(false);
+  const saveTimerRef = useRef(null);
+  const latestRatingRef = useRef(userRating);
 
-  // Handler for when user clicks favorite button and if user wants to favorite an item they will need to login
+
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
       navigate(`/login`, {
@@ -25,7 +29,6 @@ const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, o
     setIsSaving(true);
     
     try {
-      // Call the App's favorite handler with the correct data structure
       if (onToggleFavorite) {
         onToggleFavorite({
           id: id,
@@ -37,7 +40,6 @@ const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, o
         });
       }
       
-      // Also call persistFavorite if provided (for backward compatibility)
       if (persistFavorite){
         await persistFavorite({recipeId: id, title, image, isFavorited: newFavoriteStatus})
       }
@@ -50,7 +52,6 @@ const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, o
   };
 
   useEffect(() => {
-    // Check if recipe is favorited based on favorites prop
     if (initiallyFavorited) {
       setIsFavorited(true);
     } else if (favorites) {
@@ -60,18 +61,22 @@ const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, o
       setIsFavorited(false);
     }
 
-    // Load user's saved rating for this recipe
-    const user = getCurrentUser();
-    if (user) {
-      const savedRating = getRecipeRating(user.email, id);
-      setUserRating(savedRating);
+    if (!disableRatingFetch) {
+      const loadUserRating = async () => {
+        const user = await getCurrentUser();
+        if (user) {
+          const savedRating = await getRecipeRating(id);
+          setUserRating(savedRating);
+        }
+      };
+      loadUserRating();
     }
-  }, [initiallyFavorited, id, favorites]);
+  }, [initiallyFavorited, id, favorites, disableRatingFetch]);
 
 
   return (
     <div className="card h-100 shadow-sm position-relative">
-      <img src={image} alt={title} className="card-img-top" style={{ objectFit: "cover", height: "180px" }} />
+      <img src={image} alt={title} className="card-img-top" style={{ objectFit: "cover", height: "180px" }} loading="lazy" />
       <div className="card-body d-flex flex-column">
         <h5 className="card-title">{title}</h5>
         
@@ -84,14 +89,28 @@ const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, o
               }
               onMouseEnter={() => setHoverRating(starValue)}
               onMouseLeave={() => setHoverRating(0)} 
-              onClick={() => {
+              onClick={async () => {
                 const newRating = userRating === starValue ? 0 : starValue;
                 setUserRating(newRating);
-                // Save rating to localStorage
-                const user = getCurrentUser();
-                if (user) {
-                  setRecipeRating(user.email, id, newRating, title, image);
+                latestRatingRef.current = newRating;
+                if (saveTimerRef.current) {
+                  clearTimeout(saveTimerRef.current);
                 }
+                saveTimerRef.current = setTimeout(async () => {
+                  setIsSavingRating(true);
+                  const user = await getCurrentUser();
+                  if (user) {
+                    try {
+                      await setRecipeRating(id, latestRatingRef.current, title, image);
+                    } catch (e) {
+                      console.error('Save rating failed:', e?.message || e);
+                      setUserRating(userRating);
+                      latestRatingRef.current = userRating;
+                      alert('Failed to save rating. Please try again.');
+                    }
+                  }
+                  setIsSavingRating(false);
+                }, 800);
               }}
               style={{ cursor: 'pointer' }}
               title="Click to rate, Click to reset" 
@@ -105,17 +124,19 @@ const RecipeView = ({ image, title, initialRating = 0, initialReviews = 0, id, o
 
         <button 
           className="btn btn-outline-primary mt-auto"
-          onClick={() => {
-            // Track that user viewed this recipe
-            const user = getCurrentUser();
-            if (user) {
-              addToRecentlyViewed(user.email, {
-                id: id,
-                title: title,
-                image: image
-              });
+          onClick={async () => {
+            try {
+              const user = await getCurrentUser();
+              if (user) {
+                addToRecentlyViewed({ id, title, image }).catch((err) => {
+                  console.error('Error tracking recently viewed:', err);
+                });
+              }
+            } catch (e) {
+
+            } finally {
+              navigate(`/recipe/${id}`);
             }
-            navigate(`/recipe/${id}`);
           }}
         >
           <i className="bi bi-eye"></i> View Recipe

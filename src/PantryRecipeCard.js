@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { addToRecentlyViewed } from "./userDataStorage";
-import { getCurrentUser } from "./localAuth";
+import { addToRecentlyViewed } from "./services/supabaseUserData";
+import { getCurrentUser } from "./services/supabaseAuth";
+
 
 const PantryRecipeCard = ({id, image, title, usedIngredients, missingIngredients, onToggleFavorite, user, favorites}) => {
     const [isFavorited, setIsFavorited] = useState(false);
     const navigate = useNavigate();
 
-    // Check if recipe is favorited when component mounts or favorites change
     useEffect(() => {
         if (user) {
             const favorited = favorites?.some(fav => fav.id === id) || false;
@@ -45,8 +45,6 @@ const PantryRecipeCard = ({id, image, title, usedIngredients, missingIngredients
             
             <div className="card-body d-flex flex-column">
                 <h5 className="card-title">{title}</h5>
-                
-                {/* Used Ingredients */}
                 <div className="mb-2">
                     <p className="card-text text-success mb-1">
                         <strong>✓ You have ({usedIngredients?.length || 0}):</strong>
@@ -55,8 +53,6 @@ const PantryRecipeCard = ({id, image, title, usedIngredients, missingIngredients
                         {usedIngredients?.map(ingredient => ingredient.name).join(", ") || "None"}
                     </small>
                 </div>
-
-                {/* Missing Ingredients */}
                 <div className="mb-3">
                     <p className="card-text text-warning mb-1">
                         <strong>⚠ You need ({missingIngredients?.length || 0}):</strong>
@@ -65,8 +61,6 @@ const PantryRecipeCard = ({id, image, title, usedIngredients, missingIngredients
                         {missingIngredients?.map(ingredient => ingredient.name).join(", ") || "None"}
                     </small>
                 </div>
-
-                {/* Action Buttons */}
                 <div className="mt-auto d-flex justify-content-between align-items-center">
                     <button 
                         className={`btn ${isFavorited ? 'btn-danger' : 'btn-outline-danger'}`}
@@ -78,16 +72,13 @@ const PantryRecipeCard = ({id, image, title, usedIngredients, missingIngredients
                     
                     <button 
                         className="btn btn-primary btn-sm"
-                        onClick={() => {
-                            // Track that user viewed this recipe
-                            const currentUser = getCurrentUser();
-                            if (currentUser) {
-                                addToRecentlyViewed(currentUser.email, {
-                                    id: id,
-                                    title: title,
-                                    image: image
-                                });
-                            }
+                        onClick={async () => {
+                            try {
+                                const currentUser = await getCurrentUser();
+                                if (currentUser) {
+                                    addToRecentlyViewed({ id, title, image }).catch(() => {});
+                                }
+                            } catch (_) {}
                             navigate(`/recipe/${id}`);
                         }}
                     >

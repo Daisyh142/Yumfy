@@ -5,14 +5,11 @@ const Home = ({ onToggleFavorite, user, favorites }) => {
 
   return(
     <div>
-      <CuisineSection
-        title="Featured Recipes"
-        subtitle="Try Something New"
-        sort="random" 
-        onToggleFavorite={onToggleFavorite}
+      <PantrySearch
         user={user}
         favorites={favorites}
-        />
+        onToggleFavorite={onToggleFavorite}
+      />
 
       <CuisineSection
         title="Italian"
@@ -40,7 +37,7 @@ const Home = ({ onToggleFavorite, user, favorites }) => {
 
       <CuisineSection
         title="Asian"
-        cuisine="East Asian"
+        cuisine="Asian"
         onToggleFavorite={onToggleFavorite}
         user={user}
         favorites={favorites}
@@ -74,11 +71,6 @@ const Home = ({ onToggleFavorite, user, favorites }) => {
         title="European"
         cuisine="European"
         onToggleFavorite={onToggleFavorite}
-        user={user}
-        favorites={favorites}
-      />
-
-      <PantrySearch
         user={user}
         favorites={favorites}
       />

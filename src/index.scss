@@ -1,55 +1,42 @@
-
-.bg-navbar-custom {
-    background-color: hsl(56, 83%, 82%) !important;
+header {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    
+    .nav-link:hover {
+        color: var(--bs-primary) !important;
+    }
+    
+    .btn-link:hover {
+        color: var(--bs-primary) !important;
+    }
 }
 
-.navbar .nav-link {
-    font-weight: bold !important;
-    font-size: 1.4rem !important;
-}
-
-.navbar .navbar-brand h1 {
-    font-weight: bold !important;
-    font-size: 3rem !important;
-}
-
-.navbar .dropdown-toggle {
-    font-weight: bold !important;
-    font-size: 1.1rem !important;
-}
-
-/* Make login text black instead of white */
-.navbar .nav-link.text-white {
-    color: black !important;
-}
-
-$my-primary-hsl: hsl(190, 76%, 50%);
-$my-secondary-hsl: hsl(0, 0%, 0%);
-$my-background-hsl: hsl(56, 96%, 92%);
-$my-foreground-hsl: hsl(0, 0%, 0%);
+$my-primary: #FFB800;
+$my-secondary: #4F83FF;
+$my-background-hsl: #ffffff;
+$my-foreground-hsl: #212529;
+$my-accent: #FFF3CC;
 
 $my-card-hsl: hsl(56, 100%, 98%);
-$my-card-border: hsl(232, 18%, 83%);
+$my-card-border: rgba(0, 0, 0, 0.1);
 
 $card-bg: $my-card-hsl;
 $card-border-color: $my-card-border;
 
-
-
-$body-color: hsl(0, 0%, 0%);
+$body-color: $my-foreground-hsl;
 $font-family-base: "Roboto Slab", serif, 300;
-$font-size-base: 1.1rem;
+$font-size-base: 0.875rem; 
 
-
-/* make the customizations */
 $theme-colors: (
-    "primary": $my-primary-hsl,
-    "secondary": $my-secondary-hsl,
-    "info": rgb(0, 0, 0),
-    "danger": tomato
+    "primary": $my-primary,
+    "secondary": $my-secondary,
+    "success": #28a745,
+    "info": #17a2b8,
+    "warning": #ffc107,
+    "danger": #dc3545,
+    "light": #f8f9fa,
+    "dark": #343a40
 );
 
-/* import bootstrap to set changes */
 @import '~bootstrap/scss/bootstrap'; 
 
 body{
@@ -57,14 +44,20 @@ body{
     color: $my-foreground-hsl;
 }
 
-/* Remove container margins only for cuisine sections */
+.bg-accent {
+    background-color: $my-accent !important;
+}
+
+.text-accent {
+    color: $my-accent !important;
+}
+
 section.py-4 .container {
     max-width: 100% !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
 
-/* Add minimal padding to cuisine sections for readability */
 section.py-4 {
     padding-left: 15px !important;
     padding-right: 15px !important;
@@ -75,12 +68,65 @@ section.py-4 {
     opacity: 1;
 }
 
-/* Add space inside recipe cards so content doesn't touch bottom */
 .card-body {
     padding-bottom: 25px !important;
 }
 
-/* Add space at bottom of recipe detail pages */
 .container {
     padding-bottom: 30px !important;
+}
+
+.cuisine-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .explore-btn {
+        transition: all 0.3s ease;
+        
+        &:hover {
+            background-color: var(--bs-primary);
+            color: white;
+            border-color: var(--bs-primary);
+        }
+    }
+}
+
+.cuisine-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.cuisine-card:hover .cuisine-overlay {
+    opacity: 0.4 !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(79, 131, 255, 0.1) 100%);
+}
+
+.form-control-lg {
+    &:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(255, 184, 0, 0.25);
+    }
+}
+
+.recipe-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .favorite-btn {
+        transition: all 0.3s ease;
+        
+        &:hover {
+            transform: scale(1.1);
+        }
+    }
 }

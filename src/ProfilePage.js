@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from './localAuth';
-import { clearUserFavorites, getRatedRecipes, clearUserRatings, clearAllUserData, getRecentlyViewed } from './userDataStorage';
+import { signOut } from './services/supabaseAuth';
+import { getUserRatings, clearAllUserData, getRecentlyViewed } from './services/supabaseUserData';
 import RecipeCard from './RecipeView';
+
 
 const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -25,7 +26,6 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
       return;
     }
 
-    // Load user data
     setEditForm({
       name: user.name || '',
       email: user.email || '',
@@ -34,17 +34,23 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
       confirmPassword: ''
     });
 
-    // Load rated recipes and recently viewed
-    const ratings = getRatedRecipes(user.email);
-    const viewed = getRecentlyViewed(user.email);
-    setRatedRecipes(ratings);
-    setRecentlyViewed(viewed);
+    const loadUserData = async () => {
+      const ratings = await getUserRatings();
+      const viewed = await getRecentlyViewed();
+      setRatedRecipes(ratings);
+      setRecentlyViewed(viewed);
+    };
+    loadUserData();
   }, [user, navigate]);
 
-  const handleLogout = () => {
-    signOut();
-    setUser(null);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setUser(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const showMessage = (type, text) => {
@@ -52,42 +58,45 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
   };
 
-  const handleClearFavorites = () => {
+  const handleClearFavorites = async () => {
     if (window.confirm('Are you sure you want to clear all your favorites? This cannot be undone.')) {
-      clearUserFavorites(user.email);
-      showMessage('success', 'All favorites cleared successfully!');
-      // The favorites will update through the parent component
+      try {
+        await clearAllUserData(); 
+        showMessage('success', 'All favorites cleared successfully!');
+      } catch (error) {
+        console.error('Error clearing favorites:', error);
+        showMessage('error', 'Failed to clear favorites');
+      }
     }
   };
 
-  const handleClearRatings = () => {
+  const handleClearRatings = async () => {
     if (window.confirm('Are you sure you want to clear all your ratings? This cannot be undone.')) {
-      clearUserRatings(user.email);
-      setRatedRecipes([]);
-      showMessage('success', 'All ratings cleared successfully!');
+      try {
+        await clearAllUserData(); 
+        setRatedRecipes([]);
+        showMessage('success', 'All ratings cleared successfully!');
+      } catch (error) {
+        console.error('Error clearing ratings:', error);
+        showMessage('error', 'Failed to clear ratings');
+      }
     }
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (window.confirm('Are you sure you want to delete your account? This will permanently delete all your data and cannot be undone.')) {
       if (window.confirm('This is your final warning. Your account and all data will be permanently deleted. Are you absolutely sure?')) {
-        // Clear all user data
-        clearAllUserData(user.email);
-        
-        // Remove user from users list
         try {
-          const users = JSON.parse(localStorage.getItem('yumfy_users') || '[]');
-          const updatedUsers = users.filter(u => u.email !== user.email);
-          localStorage.setItem('yumfy_users', JSON.stringify(updatedUsers));
+          await clearAllUserData();
+          
+          await signOut();
+          setUser(null);
+          showMessage('info', 'Account deleted successfully');
+          navigate('/');
         } catch (error) {
-          console.error('Error deleting user:', error);
+          console.error('Error deleting user data:', error);
+          showMessage('error', 'Failed to delete account');
         }
-        
-        // Log out and redirect
-        signOut();
-        setUser(null);
-        showMessage('info', 'Account deleted successfully');
-        navigate('/');
       }
     }
   };
@@ -105,7 +114,6 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
   return (
     <div className="container py-4">
       <div className="row">
-        {/* Profile Sidebar */}
         <div className="col-md-3 mb-4">
           <div className="card">
             <div className="card-body text-center">
@@ -128,8 +136,6 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
               </button>
             </div>
           </div>
-
-          {/* Stats Card */}
           <div className="card mt-3">
             <div className="card-body">
               <h6 className="card-title">Your Activity</h6>
@@ -148,18 +154,13 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
             </div>
           </div>
         </div>
-
-        {/* Main Content */}
         <div className="col-md-9">
-          {/* Messages */}
           {message.text && (
             <div className={`alert alert-${message.type} alert-dismissible fade show`} role="alert">
               {message.text}
               <button type="button" className="btn-close" onClick={() => setMessage({ type: '', text: '' })}></button>
             </div>
           )}
-
-          {/* Edit Profile Form */}
           {showEditProfile && (
             <div className="card mb-4">
               <div className="card-header">
@@ -245,8 +246,6 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
               </div>
             </div>
           )}
-
-          {/* Navigation Tabs */}
           <ul className="nav nav-tabs mb-3">
             <li className="nav-item">
               <button 
@@ -281,10 +280,7 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
               </button>
             </li>
           </ul>
-
-          {/* Tab Content */}
           <div className="tab-content">
-            {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div>
                 <div className="card">
@@ -293,11 +289,12 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
                       <i className="bi bi-clock-history text-info me-2"></i>
                       Recently Viewed Recipes
                     </h5>
+
                     {recentlyViewed.length > 0 ? (
                       <div>
                         <div className="row">
-                          {recentlyViewed.slice(0, 8).map(recipe => (
-                            <div key={recipe.id} className="col-12 mb-3">
+                          {recentlyViewed.slice(0, 8).map((recipe, idx) => (
+                            <div key={`${recipe.id}-${recipe.dateViewed || idx}`} className="col-12 mb-3">
                               <div className="d-flex align-items-center p-2 border rounded">
                                 <img 
                                   src={recipe.image} 
@@ -308,7 +305,7 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
                                 <div className="flex-grow-1 me-3">
                                   <div className="fw-medium">{recipe.title}</div>
                                   <small className="text-muted">
-                                    {new Date(recipe.dateViewed).toLocaleDateString()}
+                                    {(() => { const d = new Date(recipe.dateViewed); return isNaN(d.getTime()) ? '-' : d.toLocaleDateString(); })()}
                                   </small>
                                 </div>
                                 <button 
@@ -341,7 +338,6 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
               </div>
             )}
 
-            {/* Favorites Tab */}
             {activeTab === 'favorites' && (
               <div>
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -379,8 +375,7 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
                 )}
               </div>
             )}
-
-            {/* Ratings Tab */}
+            
             {activeTab === 'ratings' && (
               <div>
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -393,8 +388,8 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
                 </div>
                 {ratedRecipes.length > 0 ? (
                   <div className="row">
-                    {ratedRecipes.map((recipe) => (
-                      <div className="col-12 col-md-6 col-lg-4 mb-3" key={recipe.id}>
+                    {ratedRecipes.map((recipe, idx) => (
+                      <div className="col-12 col-md-6 col-lg-4 mb-3" key={`${recipe.id}-${recipe.dateRated || idx}`}>
                         <div className="card">
                           <img 
                             src={recipe.image} 
@@ -438,8 +433,7 @@ const ProfilePage = ({ user, setUser, favorites, onToggleFavorite }) => {
                 )}
               </div>
             )}
-
-            {/* Settings Tab */}
+            
             {activeTab === 'settings' && (
               <div>
                 <h4>Account Settings</h4>

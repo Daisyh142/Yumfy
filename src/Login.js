@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { signIn, signUp } from './localAuth';
+import { signIn, signUp } from './services/supabaseAuth';
+
 
 const Login = ({ setUser }) => {
   const [email, setEmail] = useState('');
@@ -104,7 +105,7 @@ const Login = ({ setUser }) => {
         {!isSignUp && (
           <div className="mt-3">
             <small className="text-muted">
-            @ Disclamier: All personal information collected by Yumfy is done so exclusively with your consent. No information is collected automatically. Yumfy does not store any personal information as all the information will be saved on your local drive and you have full control over your own data. 
+            @ Disclamier: All personal information collected by Yumfy is done so exclusively with your consent. No information is collected automatically.
             </small>
           </div>
         )}
